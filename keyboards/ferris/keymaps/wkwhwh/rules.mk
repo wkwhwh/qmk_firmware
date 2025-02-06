@@ -1,2 +1,4 @@
 SRC += oneshot.c
-SRC += swapper.c
+SRC += midi.c
+
+MIDI_ENABLE = yes

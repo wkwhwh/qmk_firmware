@@ -1,0 +1,6 @@
+#pragma once
+
+#define MIDI_ADVANCED
+
+#define MIDI_INITIAL_VELOCITY 127
+#define MIDI_INITIAL_OCTAVE 3

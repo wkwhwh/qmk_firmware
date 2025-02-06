@@ -1,32 +1,36 @@
 #include QMK_KEYBOARD_H
 #include "oneshot.h"
-#include "swapper.h"
+#include "midi.h"
+
 #define HOME G(KC_LEFT)
 #define END G(KC_RGHT)
 #define FWD G(KC_RBRC)
 #define BACK G(KC_LBRC)
-#define AE_TILE A(KC_DOT)      // alt + . (Aerospace Tiles)
-#define AE_ACRD A(KC_COMM)     // alt + , (Aerospace Accordion)
-#define AE_LNCH S(A(KC_QUOT))  // shift + alt + ' (Aerospace Launch Mode)
-#define AE_SRVC S(A(KC_SCLN))  // shift + alt + ; (Aersospace Service Mode)
-#define SPTLGHT G(KC_SPC)      // cmd + space (Spotlight)
+#define AE_TILE A(KC_DOT)
+#define AE_ACRD A(KC_COMM)
+#define AE_LNCH S(A(KC_QUOT))
+#define AE_SRVC S(A(KC_SCLN))
 #define LA_SYM MO(SYM)
 #define LA_NAV MO(NAV)
+#define LA_MI1 TG(MI1)
+#define LA_MI2 TG(MI2)
+#define LOCK G(C(KC_Q))
+#define SLEEPD S(C(KC_PWR))
 
 enum layers {
     DEF,
     SYM,
     NAV,
     NUM,
+    MI1,
+    MI2,
 };
 
 enum keycodes {
-    // Custom oneshot mod implementation with no timers.
-    OS_SHFT = SAFE_RANGE,
+    OS_SHFT = NEW_SAFE_RANGE,
     OS_CTRL,
     OS_ALT,
     OS_CMD,
-    SW_WIN,  // Switch to next window (alt-`)
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -43,18 +47,30 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                    _______, _______, _______, _______
     ),
     [NAV] = LAYOUT(
-        KC_TAB,  SW_WIN,  AE_TILE, AE_ACRD, KC_VOLU, QK_BOOT, HOME,    KC_UP,   END,     KC_DEL,
-        OS_CTRL, OS_SHFT, OS_ALT,  OS_CMD,  KC_VOLD, KC_CAPS, KC_LEFT, KC_DOWN, KC_RGHT, KC_BSPC,
-        AE_LNCH, AE_SRVC, BACK,    FWD,     KC_MPLY, XXXXXXX, KC_PGDN, KC_PGUP, SPTLGHT, KC_ENT,
+        KC_TAB,  AE_TILE, AE_ACRD, KC_VOLD, KC_VOLU, QK_BOOT, HOME,    KC_UP,   END,     KC_DEL,
+        OS_CTRL, OS_SHFT, OS_ALT,  OS_CMD,  KC_MPLY, SLEEPD,  KC_LEFT, KC_DOWN, KC_RGHT, KC_BSPC,
+        AE_LNCH, AE_SRVC, BACK,    FWD,     XXXXXXX, LOCK,    KC_PGDN, KC_PGUP, KC_CAPS, KC_ENT,
                                    _______, _______, _______, _______
     ),
     [NUM] = LAYOUT(
         KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,
         OS_CTRL, OS_SHFT, OS_ALT,  OS_CMD,  KC_F11,  KC_F12,  OS_CMD,  OS_ALT,  OS_SHFT, OS_CTRL,
-        KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,  KC_F8,   KC_F9,   KC_F10,
+        KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,
                                    _______, _______, _______, _______
     ),
-};
+    [MI1] = LAYOUT(
+        MI_Db,   MI_Eb,   XXXXXXX, MI_Gb,   MI_Ab,   MI_Bb,   XXXXXXX, MI_Db1,  MI_Eb1,  XXXXXXX,
+        MI_C,    MI_D,    MI_E,    MI_F,    MI_G,    MI_A,    MI_B,    MI_C1,   MI_D1,   MI_E1,
+        MI_OCTD, MI_OCTU, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, LA_MI1,
+                                   _______, _______, _______, _______
+    ),
+    [MI2] = LAYOUT(
+        MI_CC1, MI_CC2, MI_CC3, MI_CC4,  MI_CC5,  MI_CC6,  MI_CC7,  MI_CC8,  MI_CC9,  MI_CC10,
+        MI_CC11,MI_CC12,MI_CC13,MI_CC14, MI_CC15, MI_CC16, MI_CC17, MI_CC18, MI_CC19, MI_CC20,
+        MI_CC21,MI_CC22,MI_CC23,MI_CC24, MI_CC25, MI_CC26, MI_CC27, MI_CC28, MI_CC29, MI_CC30,
+                                   _______, _______, _______, _______
+    ),
+   };
 
 bool is_oneshot_cancel_key(uint16_t keycode) {
     switch (keycode) {
@@ -88,10 +104,10 @@ oneshot_state os_alt_state = os_up_unqueued;
 oneshot_state os_cmd_state = os_up_unqueued;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    update_swapper(
-        &sw_win_active, KC_LGUI, KC_GRV, SW_WIN,
-        keycode, record
-    );
+    if (process_midi_cc_keycode(keycode, record)) {
+        return true;
+    }
+
     update_oneshot(
         &os_shft_state, KC_LSFT, OS_SHFT,
         keycode, record
@@ -108,6 +124,27 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         &os_cmd_state, KC_LCMD, OS_CMD,
         keycode, record
     );
+
+    switch (keycode) {
+    case KC_LSFT:
+        if (record->event.pressed) {
+            if (layer_state_is(NAV)) {
+                layer_invert(MI1);
+                if (layer_state_is(MI2)) layer_off(MI2);
+                return false;
+            }
+        }
+        break;
+    case KC_SPC:
+        if (record->event.pressed) {
+            if (layer_state_is(SYM)) {
+                layer_invert(MI2);
+                if (layer_state_is(MI1)) layer_off(MI1);
+                return false;
+            }
+        }
+        break;
+    }
     return true;
 }
 
