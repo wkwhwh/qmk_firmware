@@ -1,5 +1,4 @@
 #include QMK_KEYBOARD_H
-#include "midi.h"
 
 // Definitions
 #define HOME G(KC_LEFT)
@@ -23,8 +22,6 @@ enum layers {
     SYM,
     NAV,
     NUM,
-    MI1,
-    MI2,
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -52,47 +49,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_F1,         KC_F2,         KC_F3,         KC_F4,         KC_F5,             KC_F6,         KC_F7,         KC_F8,         KC_F9,         KC_F10,
                                                      _______,       _______,           _______,       _______
     ),
-    [MI1] = LAYOUT(
-        MI_Db,         MI_Eb,         XXXXXXX,       MI_Gb,         MI_Ab,             MI_Bb,         XXXXXXX,       MI_Db1,        MI_Eb1,        XXXXXXX,
-        MI_C,          MI_D,          MI_E,          MI_F,          MI_G,              MI_A,          MI_B,          MI_C1,         MI_D1,         MI_E1,
-        MI_OCTD,       MI_OCTU,       XXXXXXX,       XXXXXXX,       XXXXXXX,           XXXXXXX,       XXXXXXX,       XXXXXXX,       XXXXXXX,       XXXXXXX,
-                                                     _______,       _______,           _______,       _______
-    ),
-    [MI2] = LAYOUT(
-        MI_CC1,        MI_CC2,        MI_CC3,        MI_CC4,        MI_CC5,            MI_CC6,        MI_CC7,        MI_CC8,        MI_CC9,        MI_CC10,
-        MI_CC11,       MI_CC12,       MI_CC13,       MI_CC14,       MI_CC15,           MI_CC16,       MI_CC17,       MI_CC18,       MI_CC19,       MI_CC20,
-        MI_CC21,       MI_CC22,       MI_CC23,       MI_CC24,       MI_CC25,           MI_CC26,       MI_CC27,       MI_CC28,       MI_CC29,       MI_CC30,
-                                                     _______,       _______,           _______,       _______
-    ),
 };
-
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (process_midi_cc_keycode(keycode, record)) {
-        return true;
-    }
-
-    switch (keycode) {
-    case KC_LSFT:
-        if (record->event.pressed) {
-            if (layer_state_is(NAV)) {
-                layer_invert(MI1);
-                if (layer_state_is(MI2)) layer_off(MI2);
-                return false;
-            }
-        }
-        break;
-    case KC_SPC:
-        if (record->event.pressed) {
-            if (layer_state_is(SYM)) {
-                layer_invert(MI2);
-                if (layer_state_is(MI1)) layer_off(MI1);
-                return false;
-            }
-        }
-        break;
-    }
-    return true;
-}
 
 layer_state_t layer_state_set_user(layer_state_t state) {
     return update_tri_layer_state(state, SYM, NAV, NUM);
