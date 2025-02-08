@@ -10,10 +10,8 @@
 #define AE_SRVC S(A(KC_SCLN))
 #define LA_SYM MO(SYM)
 #define LA_NAV MO(NAV)
-#define LA_MI1 TG(MI1)
-#define LA_MI2 TG(MI2)
 #define LOCK G(C(KC_Q))
-#define SLEEPD S(C(KC_PWR))
+#define INIT C(S(A(G(KC_I))))
 
 enum layers {
     DEF,
@@ -37,7 +35,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [NAV] = LAYOUT(
         KC_TAB,        AE_TILE,       AE_ACRD,       KC_VOLD,       KC_VOLU,           QK_BOOT,       HOME,          KC_UP,         END,           KC_DEL,
-        OSM(MOD_LCTL), OSM(MOD_LSFT), OSM(MOD_LALT), OSM(MOD_LGUI), KC_MPLY,           SLEEPD,        KC_LEFT,       KC_DOWN,       KC_RGHT,       KC_BSPC,
+        OSM(MOD_LCTL), OSM(MOD_LSFT), OSM(MOD_LALT), OSM(MOD_LGUI), KC_MPLY,           INIT,          KC_LEFT,       KC_DOWN,       KC_RGHT,       KC_BSPC,
         AE_LNCH,       AE_SRVC,       BACK,          FWD,           XXXXXXX,           LOCK,          KC_PGDN,       KC_PGUP,       KC_CAPS,       KC_ENT,
                                                      _______,       _______,           _______,       _______
     ),
